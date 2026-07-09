@@ -116,7 +116,6 @@ function renderMapAndPanel() {
     }
     // Kunci kawat jebakan secara total
     if (scrollTimeout) clearTimeout(scrollTimeout);
-detailsContainer.classList.add('sedang-auto-scroll');
     
     detailsContainer.classList.add('sedang-auto-scroll');
     detailsContainer.scrollTo({ top: posisiTarget, behavior: 'smooth' });
@@ -241,9 +240,6 @@ marker.on('click', function() {
         let indexStr = index.toString();
         indexAktif = indexStr; 
   if (scrollTimeout) clearTimeout(scrollTimeout);
-detailsContainer.classList.add('sedang-auto-scroll');
-
-        // Kunci kawat jebakan
         detailsContainer.classList.add('sedang-auto-scroll');
 
         let targetItem = document.getElementById(`item-${index}`);
@@ -290,18 +286,19 @@ let scrollPos = parentDiv.offsetTop;
   // --------------------------------========================================
   // PELEPAS KUNCI DARURAT: MENDETEKSI INTERUPSI FISIK PENGGUNA
   // --------------------------------========================================
-  ['wheel', 'touchstart', 'touchmove'].forEach(namaEvent => {
+ ['wheel', 'touchstart', 'touchmove'].forEach(namaEvent => {
     detailsContainer.addEventListener(namaEvent, () => {
-      // 1. Jika pengguna mengusap layar atau memutar mouse, cabut kawat jebakan secara paksa!
+      // --- TAMBAHKAN BARIS INI UNTUK PENGAMAN MEMORI ---
+      if (typeof scrollTimeout !== 'undefined' && scrollTimeout) clearTimeout(scrollTimeout);
+
       if (detailsContainer.classList.contains('sedang-auto-scroll')) {
         detailsContainer.classList.remove('sedang-auto-scroll');
       }
       
-      // 2. Karena pengguna mengambil alih kendali (interupsi), hentikan mode Play
       if (isPlaying) {
         hentikanPlay();
       }
-    }, { passive: true }); // 'passive: true' sangat penting agar tidak membuat scroll menjadi lag di HP
+    }, { passive: true }); 
   });
 
   // --------------------------------========================================
@@ -338,11 +335,9 @@ detailsContainer.addEventListener('scrollend', () => {
     threshold: 0 
   };
 
-  let observer = new IntersectionObserver((entries) => {
-    // ABAIKAN deteksi jika pergerakan layar sedang dikendalikan oleh sistem (Play/Klik Marker)
-    if (detailsContainer.classList.contains('sedang-auto-scroll')) return;
-
-    // 2. TAMBAHAN: Masukkan atau hapus elemen dari papan tulis Set secara real-time
+let observer = new IntersectionObserver((entries) => {
+    
+    // 1. UPDATE BUKU CATATAN (WAJIB TERUS BERJALAN, JANGAN DIHALANGI)
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         intersectingItems.add(entry.target);
@@ -351,9 +346,12 @@ detailsContainer.addEventListener('scrollend', () => {
       }
     });
 
-    // 3. TAMBAHAN: Cari secara matematika siapa elemen yang paling pas berada di langit-langit panel
+    // 2. BARU PASANG BLOKADE DI SINI (Hanya halangi eksekusi action-nya)
+    if (detailsContainer.classList.contains('sedang-auto-scroll')) return;
+
+    // 3. Logika pencarian kandidatTerpilih ...
     let kandidatTerpilih = null;
-    let lokasiGarisTarget = detailsContainer.scrollTop; // Karena margin atas 0px, targetnya tepat di scrollTop kontainer
+    let lokasiGarisTarget = detailsContainer.scrollTop;
     let maxOffsetTop = -1;
 
     intersectingItems.forEach(item => {
