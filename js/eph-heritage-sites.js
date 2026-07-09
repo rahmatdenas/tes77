@@ -272,6 +272,23 @@ let scrollPos = parentDiv.offsetTop;
   });
 
   // --------------------------------========================================
+  // PELEPAS KUNCI DARURAT: MENDETEKSI INTERUPSI FISIK PENGGUNA
+  // --------------------------------========================================
+  ['wheel', 'touchstart', 'touchmove'].forEach(namaEvent => {
+    detailsContainer.addEventListener(namaEvent, () => {
+      // 1. Jika pengguna mengusap layar atau memutar mouse, cabut kawat jebakan secara paksa!
+      if (detailsContainer.classList.contains('sedang-auto-scroll')) {
+        detailsContainer.classList.remove('sedang-auto-scroll');
+      }
+      
+      // 2. Karena pengguna mengambil alih kendali (interupsi), hentikan mode Play
+      if (isPlaying) {
+        hentikanPlay();
+      }
+    }, { passive: true }); // 'passive: true' sangat penting agar tidak membuat scroll menjadi lag di HP
+  });
+
+  // --------------------------------========================================
   // DETEKTOR UTAMA: MENYALAKAN KEMBALI KAWAT TEPAT SAAT SMOOTH SCROLL SELESAI
   // --------------------------------========================================
   detailsContainer.addEventListener('scrollend', () => {
